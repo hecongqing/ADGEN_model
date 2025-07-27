@@ -1,0 +1,101 @@
+# Qwen广告文案生成模型训练配置
+
+# 数据集配置
+dataset:
+  name: "AdvertiseGen"
+  source: "modelscope"  # modelscope, local, huggingface
+  dataset_path: null  # 本地数据集路径，如果使用本地数据集
+  cache_dir: "./dataset"
+  max_length: 512
+  train_split: "train"
+  validation_split: "validation"
+  test_split: null
+
+# 模型配置
+model:
+  name: "Qwen/Qwen2.5-7B-Instruct"
+  cache_dir: "./dataset"
+  use_lora: true
+  use_8bit: true
+  use_flash_attention: true
+  trust_remote_code: true
+
+# LoRA配置
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+  target_modules:
+    - "q_proj"
+    - "k_proj" 
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# 训练配置
+training:
+  output_dir: "./outputs"
+  logging_dir: "./outputs/logs"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  max_grad_norm: 1.0
+  
+  # 评估配置
+  evaluation_strategy: "steps"
+  eval_steps: 500
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  
+  # 日志配置
+  logging_steps: 100
+  report_to: "tensorboard"
+  
+  # 其他配置
+  fp16: true
+  dataloader_num_workers: 4
+  remove_unused_columns: false
+  seed: 42
+
+# 生成配置
+generation:
+  max_new_tokens: 256
+  min_new_tokens: 10
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+  num_beams: 1
+  early_stopping: false
+
+# 推理服务配置
+inference:
+  model_path: "./outputs"
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  max_model_len: 8192
+  dtype: "half"
+
+# 应用配置
+app:
+  server_name: "0.0.0.0"
+  server_port: 7860
+  share: false
+  use_local_model: true
+  service_url: "http://localhost:8000"
